@@ -13,3 +13,6 @@ coverage/
 *.tsbuildinfo
 pnpm-debug.log*
 Dockerfile.local
+.codegraph/
+daemon.pid
+*.pid
