@@ -287,6 +287,39 @@ Prompt 结构：
 
 前端页面：
 
+前端目录结构：
+
+src
+├── api
+├── queries
+├── stores
+├── hooks
+├── pages
+├── components
+├── layouts
+├── router
+└── utils
+
+说明：
+
+api：
+接口封装
+
+queries：
+TanStack Query 逻辑
+
+stores：
+Zustand 状态
+
+hooks：
+业务 Hook
+
+components：
+公共组件
+
+pages：
+页面模块
+
 1. 登录页
 2. 注册页
 3. 当前企业 Dashboard
@@ -308,6 +341,18 @@ Prompt 结构：
    * webhook 地址
    * 测试发送
 7. 聊天记录页
+
+   8. 用户管理页
+
+      \* 成员列表
+      \* 新增成员
+      \* 删除成员
+
+   9. 企业设置页
+
+      \* 企业名称
+      \* 企业信息
+      \* 当前套餐
 
 MVP 阶段不要做：
 
@@ -361,9 +406,10 @@ Docker Compose 包含：
 第六步：实现 BullMQ 文档解析队列
 第七步：实现文档解析、切片、embedding、pgvector 入库
 第八步：实现 /chat/ask 问答接口
-第九步：实现前端文档管理页和问答测试页
-第十步：实现企业微信机器人配置和测试发送
-第十一步：完善 README 和部署说明
+第九步：搭建 React 前端基础架构（Router、Query、Zustand、Layout）
+第十步：实现文档管理页和问答测试页
+第十一步：实现企业微信机器人配置和测试发送
+第十二步：完善 README 和部署说明
 
 验收标准：
 
@@ -381,3 +427,88 @@ Docker Compose 包含：
 12. 聊天记录可以保存到 chat_logs
 
 请先实现 MVP，代码保持清晰、简单、可运行。不要过度设计。
+
+
+
+前端架构规范：
+
+客户端状态：
+使用 Zustand 管理：
+
+* 当前登录用户
+* 当前企业信息
+* Token
+* 系统配置
+
+服务端数据：
+使用 TanStack Query 管理：
+
+* 文档列表
+* 聊天记录
+* 企业微信机器人
+* 当前企业信息
+* 用户列表
+
+禁止把服务端列表数据放入 Zustand。
+
+请求规范：
+
+* 统一使用 Axios
+* 页面组件禁止直接调用 axios
+* 所有接口封装到 api 目录
+
+ahooks 规范：
+
+允许使用 useRequest。
+
+推荐：
+
+* useBoolean
+* useToggle
+* useSetState
+* useDebounceFn
+* useThrottleFn
+* useMemoizedFn
+* useLocalStorageState
+
+说明：
+
+useRequest 适用于页面级请求和表单提交。
+
+文档列表、聊天记录、企业信息等核心数据统一使用 TanStack Query 管理。
+
+前端目录结构：
+
+src
+├── api
+├── queries
+├── stores
+├── hooks
+├── pages
+├── components
+├── layouts
+├── router
+└── utils
+
+说明：
+
+api：
+接口封装
+
+queries：
+TanStack Query 逻辑
+
+stores：
+Zustand 状态
+
+hooks：
+业务 Hook
+
+components：
+公共组件
+
+pages：
+页面模块
+
+TanStack Query 仅用于前端服务端状态管理，不替代后端的 Prisma、PostgreSQL、Redis。
+后端仍然使用 NestJS + Prisma + PostgreSQL + Redis + BullMQ。

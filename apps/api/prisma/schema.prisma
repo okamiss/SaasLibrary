@@ -34,6 +34,11 @@ enum ChatLogSource {
   WECOM
 }
 
+enum WecomBotStatus {
+  ACTIVE
+  DISABLED
+}
+
 /// Tenant root. Child business tables must reference this table through company_id.
 model Company {
   id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -44,6 +49,7 @@ model Company {
   documents      Document[]
   documentChunks DocumentChunk[]
   chatLogs       ChatLog[]
+  wecomBots      WecomBot[]
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
 
@@ -128,4 +134,21 @@ model ChatLog {
   @@index([companyId])
   @@index([companyId, createdAt])
   @@map("chat_logs")
+}
+
+model WecomBot {
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String         @map("company_id") @db.Uuid
+  company    Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name       String
+  webhookUrl String         @map("webhook_url")
+  secret     String?
+  status     WecomBotStatus @default(ACTIVE)
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+
+  @@unique([id, companyId])
+  @@index([companyId])
+  @@index([companyId, status])
+  @@map("wecom_bots")
 }

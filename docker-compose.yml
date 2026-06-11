@@ -27,22 +27,42 @@ services:
     image: node:22-alpine
     container_name: ai-company-assistant-api
     working_dir: /workspace
-    command: sh -c "corepack enable && pnpm install && pnpm --filter @ai-company-assistant/api run start:dev"
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm --filter @ai-company-assistant/api run start:dev"
     environment:
       NODE_ENV: development
-      PORT: 3000
+      PORT: ${PORT:-3000}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ai_company_assistant}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      ALI_OSS_REGION: ${ALI_OSS_REGION:-}
-      ALI_OSS_BUCKET: ${ALI_OSS_BUCKET:-}
-      ALI_OSS_ACCESS_KEY_ID: ${ALI_OSS_ACCESS_KEY_ID:-}
-      ALI_OSS_ACCESS_KEY_SECRET: ${ALI_OSS_ACCESS_KEY_SECRET:-}
-      ALI_OSS_ENDPOINT: ${ALI_OSS_ENDPOINT:-}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      ALI_OSS_REGION: ${ALI_OSS_REGION:-oss-cn-shanghai}
+      ALI_OSS_BUCKET: ${ALI_OSS_BUCKET:-local-dev-placeholder}
+      ALI_OSS_ACCESS_KEY_ID: ${ALI_OSS_ACCESS_KEY_ID:-local-dev-placeholder}
+      ALI_OSS_ACCESS_KEY_SECRET: ${ALI_OSS_ACCESS_KEY_SECRET:-local-dev-placeholder}
+      ALI_OSS_ENDPOINT: ${ALI_OSS_ENDPOINT:-oss-cn-shanghai.aliyuncs.com}
+      CHAT_PROVIDER: ${CHAT_PROVIDER:-deepseek}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-aliyun}
+      ALI_EMBEDDING_API_KEY: ${ALI_EMBEDDING_API_KEY:-}
+      ALI_EMBEDDING_BASE_URL: ${ALI_EMBEDDING_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      ALI_EMBEDDING_MODEL: ${ALI_EMBEDDING_MODEL:-text-embedding-v4}
+      ZHIPU_API_KEY: ${ZHIPU_API_KEY:-}
+      ZHIPU_EMBEDDING_BASE_URL: ${ZHIPU_EMBEDDING_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
+      ZHIPU_EMBEDDING_MODEL: ${ZHIPU_EMBEDDING_MODEL:-embedding-3}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
     ports:
       - "38082:3000"
     volumes:
       - .:/workspace
+      - root_node_modules:/workspace/node_modules
+      - api_node_modules:/workspace/apps/api/node_modules
+      - web_node_modules:/workspace/apps/web/node_modules
     depends_on:
       - postgres
       - redis
@@ -51,17 +71,23 @@ services:
     image: node:22-alpine
     container_name: ai-company-assistant-web
     working_dir: /workspace
-    command: sh -c "corepack enable && pnpm install && pnpm --filter @ai-company-assistant/web run dev -- --host 0.0.0.0"
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm --filter @ai-company-assistant/web run dev -- --host 0.0.0.0"
     environment:
       NODE_ENV: development
-      VITE_API_BASE_URL: http://localhost:3000
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:38082}
     ports:
       - "38083:5173"
     volumes:
       - .:/workspace
+      - root_node_modules:/workspace/node_modules
+      - api_node_modules:/workspace/apps/api/node_modules
+      - web_node_modules:/workspace/apps/web/node_modules
     depends_on:
       - api
 
 volumes:
   postgres_data:
   redis_data:
+  root_node_modules:
+  api_node_modules:
+  web_node_modules:

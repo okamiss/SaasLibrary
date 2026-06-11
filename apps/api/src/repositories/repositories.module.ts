@@ -5,6 +5,7 @@ import { CompanyRepository } from './company.repository';
 import { DocumentChunkRepository } from './document-chunk.repository';
 import { DocumentRepository } from './document.repository';
 import { UserRepository } from './user.repository';
+import { WecomRepository } from './wecom.repository';
 
 @Module({
   providers: [
@@ -13,7 +14,8 @@ import { UserRepository } from './user.repository';
     CompanyRepository,
     DocumentChunkRepository,
     DocumentRepository,
-    UserRepository
+    UserRepository,
+    WecomRepository
   ],
   exports: [
     AuthRepository,
@@ -21,7 +23,8 @@ import { UserRepository } from './user.repository';
     CompanyRepository,
     DocumentChunkRepository,
     DocumentRepository,
-    UserRepository
+    UserRepository,
+    WecomRepository
   ]
 })
 export class RepositoriesModule {}

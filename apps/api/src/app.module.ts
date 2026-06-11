@@ -14,6 +14,7 @@ import { QueueModule } from './queue/queue.module';
 import { RedisModule } from './redis/redis.module';
 import { RepositoriesModule } from './repositories/repositories.module';
 import { UserModule } from './user/user.module';
+import { WecomModule } from './wecom/wecom.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { UserModule } from './user/user.module';
     EmbeddingModule,
     ParserModule,
     UserModule,
-    OssModule
+    OssModule,
+    WecomModule
   ],
   controllers: [AppController],
   providers: [AppService]
