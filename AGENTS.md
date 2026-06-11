@@ -92,3 +92,42 @@
     - Let AI answer without retrieval context
     - Skip source citation
     - Build features outside MVP scope
+
+
+
+    ## CodeGraph (Required)
+
+This repository uses CodeGraph.
+
+Before performing code analysis, debugging, refactoring, or feature implementation:
+
+- Use CodeGraph MCP tools as the primary navigation mechanism.
+- Use CodeGraph to locate symbols, references, callers, callees, dependencies, and impact scope.
+- Use CodeGraph to understand architecture before reading files.
+- Determine affected code paths before making changes.
+
+Do NOT start with:
+
+- grep
+- ripgrep
+- find
+- global text search
+- reading large portions of the repository
+
+Read source files only after the relevant locations have been identified through CodeGraph.
+
+If CodeGraph is not initialized:
+
+```bash
+codegraph init -i
+```
+
+Preferred workflow:
+
+1. Analyze repository structure with CodeGraph.
+2. Locate relevant symbols and references.
+3. Trace dependencies and call chains.
+4. Determine impact scope.
+5. Read only necessary files.
+6. Implement changes.
+7. Verify changes.

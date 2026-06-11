@@ -1,9 +1,11 @@
 import { PrismaClient, UserRole } from '@prisma/client';
+import { hashSync } from 'bcryptjs';
 
 process.env.DATABASE_URL ??=
   'postgresql://postgres:postgres@localhost:5432/ai_company_assistant';
 
 const prisma = new PrismaClient();
+const seedPasswordHash = hashSync('Admin123456', 10);
 
 async function main() {
   const alpha = await prisma.company.upsert({
@@ -36,7 +38,7 @@ async function main() {
       companyId: alpha.id,
       name: 'Alpha Admin',
       email: 'admin@alpha.example',
-      passwordHash: 'phase-2-seed-placeholder',
+      passwordHash: seedPasswordHash,
       role: UserRole.ADMIN
     }
   });
@@ -53,7 +55,7 @@ async function main() {
       companyId: beta.id,
       name: 'Beta Admin',
       email: 'admin@beta.example',
-      passwordHash: 'phase-2-seed-placeholder',
+      passwordHash: seedPasswordHash,
       role: UserRole.ADMIN
     }
   });

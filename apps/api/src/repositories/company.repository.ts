@@ -15,4 +15,11 @@ export class CompanyRepository {
       where: { id }
     });
   }
+
+  updateById(id: string, data: Prisma.CompanyUpdateInput) {
+    return this.prisma.company.update({
+      where: { id },
+      data
+    });
+  }
 }
