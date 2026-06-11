@@ -15,7 +15,11 @@ import { QUEUE_NAMES } from './queue.constants';
       })
     }),
     BullModule.registerQueue({
-      name: QUEUE_NAMES.DEFAULT
+      name: QUEUE_NAMES.DEFAULT,
+      defaultJobOptions: {
+        removeOnComplete: 100,
+        removeOnFail: 500
+      }
     })
   ],
   exports: [BullModule]

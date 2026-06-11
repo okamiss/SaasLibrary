@@ -22,15 +22,30 @@ enum UserRole {
   MEMBER
 }
 
+enum DocumentStatus {
+  UPLOADED
+  PARSING
+  COMPLETED
+  FAILED
+}
+
+enum ChatLogSource {
+  WEB
+  WECOM
+}
+
 /// Tenant root. Child business tables must reference this table through company_id.
 model Company {
-  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String
-  status    CompanyStatus @default(ACTIVE)
-  plan      CompanyPlan   @default(FREE)
-  users     User[]
-  createdAt DateTime      @default(now()) @map("created_at")
-  updatedAt DateTime      @updatedAt @map("updated_at")
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  status         CompanyStatus   @default(ACTIVE)
+  plan           CompanyPlan     @default(FREE)
+  users          User[]
+  documents      Document[]
+  documentChunks DocumentChunk[]
+  chatLogs       ChatLog[]
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
   @@map("companies")
 }
@@ -43,6 +58,8 @@ model User {
   email        String
   passwordHash String   @map("password_hash")
   role         UserRole @default(MEMBER)
+  documents    Document[]
+  chatLogs     ChatLog[]
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -50,4 +67,65 @@ model User {
   @@index([companyId])
   @@index([email])
   @@map("users")
+}
+
+model Document {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String          @map("company_id") @db.Uuid
+  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  uploadedBy   String          @map("uploaded_by") @db.Uuid
+  uploader     User            @relation(fields: [uploadedBy], references: [id], onDelete: Restrict)
+  originalName String          @map("original_name")
+  fileKey      String          @map("file_key")
+  fileSize     Int             @map("file_size")
+  mimeType     String          @map("mime_type")
+  status       DocumentStatus  @default(UPLOADED)
+  errorMessage String?         @map("error_message")
+  chunks       DocumentChunk[]
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  @@unique([id, companyId])
+  @@index([companyId])
+  @@index([companyId, status])
+  @@map("documents")
+}
+
+model DocumentChunk {
+  id         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String                  @map("company_id") @db.Uuid
+  company    Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  documentId String                  @map("document_id") @db.Uuid
+  document   Document                @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex Int                     @map("chunk_index")
+  content    String
+  embedding  Unsupported("vector")?
+  tokenCount Int?                    @map("token_count")
+  metadata   Json?
+  createdAt  DateTime                @default(now()) @map("created_at")
+
+  @@unique([documentId, chunkIndex])
+  @@index([companyId])
+  @@index([companyId, documentId])
+  @@map("document_chunks")
+}
+
+model ChatLog {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String        @map("company_id") @db.Uuid
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId           String?       @map("user_id") @db.Uuid
+  user             User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  source           ChatLogSource @default(WEB)
+  question         String
+  answer           String
+  sourceChunks     Json          @default("[]") @map("source_chunks")
+  model            String
+  promptTokens     Int           @default(0) @map("prompt_tokens")
+  completionTokens Int           @default(0) @map("completion_tokens")
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  @@index([companyId])
+  @@index([companyId, createdAt])
+  @@map("chat_logs")
 }
