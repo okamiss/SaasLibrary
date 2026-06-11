@@ -1,0 +1,37 @@
+{
+  "name": "@ai-company-assistant/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "prebuild": "pnpm run prisma:generate",
+    "build": "nest build",
+    "prelint": "pnpm run prisma:generate",
+    "lint": "tsc -p tsconfig.build.json --noEmit --pretty false",
+    "prestart": "pnpm run prisma:generate",
+    "start": "node dist/main.js",
+    "prestart:dev": "pnpm run prisma:generate",
+    "start:dev": "nest start --watch",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:seed": "prisma db seed"
+  },
+  "dependencies": {
+    "@nestjs/bullmq": "11.0.4",
+    "@nestjs/common": "11.1.26",
+    "@nestjs/config": "4.0.4",
+    "@nestjs/core": "11.1.26",
+    "@nestjs/platform-express": "11.1.26",
+    "@prisma/client": "6.19.2",
+    "bullmq": "5.78.0",
+    "ioredis": "5.11.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "11.0.23",
+    "@types/node": "22.19.0",
+    "prisma": "6.19.2",
+    "tsx": "4.22.4"
+  }
+}

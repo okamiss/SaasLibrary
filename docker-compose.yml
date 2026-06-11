@@ -1,0 +1,62 @@
+name: ai-company-assistant
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ai-company-assistant-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ai_company_assistant}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai-company-assistant-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  api:
+    image: node:22-alpine
+    container_name: ai-company-assistant-api
+    working_dir: /workspace
+    command: sh -c "corepack enable && pnpm install && pnpm --filter @ai-company-assistant/api run start:dev"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ai_company_assistant}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/workspace
+    depends_on:
+      - postgres
+      - redis
+
+  web:
+    image: node:22-alpine
+    container_name: ai-company-assistant-web
+    working_dir: /workspace
+    command: sh -c "corepack enable && pnpm install && pnpm --filter @ai-company-assistant/web run dev -- --host 0.0.0.0"
+    environment:
+      NODE_ENV: development
+      VITE_API_BASE_URL: http://localhost:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/workspace
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:

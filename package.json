@@ -1,0 +1,22 @@
+{
+  "name": "ai-company-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.5.3",
+  "engines": {
+    "node": ">=22.12.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present run build",
+    "lint": "pnpm -r --if-present run lint",
+    "dev": "pnpm --parallel -r --filter \"./apps/*\" run dev",
+    "db:generate": "pnpm --filter @ai-company-assistant/api run prisma:generate",
+    "db:migrate": "pnpm --filter @ai-company-assistant/api run prisma:migrate",
+    "db:seed": "pnpm --filter @ai-company-assistant/api run prisma:seed"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.0",
+    "typescript": "6.0.3"
+  }
+}
