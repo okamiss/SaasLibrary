@@ -38,10 +38,11 @@ export class DocumentService {
     this.validateFile(file);
 
     const documentId = randomUUID();
+    const originalName = this.normalizeOriginalFilename(file.originalname);
     const fileKey = this.ossService.generateObjectKey({
       companyId: currentUser.companyId,
       documentId,
-      filename: file.originalname,
+      filename: originalName,
       date: new Date()
     });
 
@@ -57,7 +58,7 @@ export class DocumentService {
         id: documentId,
         companyId: currentUser.companyId,
         uploadedBy: currentUser.id,
-        originalName: file.originalname,
+        originalName,
         fileKey,
         fileSize: file.size,
         mimeType: file.mimetype,
@@ -181,9 +182,24 @@ export class DocumentService {
     await this.documentRepository.deleteWithChunks(companyId, id);
   }
 
+  private normalizeOriginalFilename(filename: string) {
+    const decoded = Buffer.from(filename, 'latin1').toString('utf8');
+    const hasReplacementCharacter = decoded.includes('\uFFFD');
+    const looksLikeMojibake = /[\u0080-\u009FÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ]/.test(
+      filename
+    );
+
+    if (!hasReplacementCharacter && looksLikeMojibake) {
+      return decoded;
+    }
+
+    return filename;
+  }
+
   private toResponse(document: Document): DocumentResponse {
     return {
       ...document,
+      originalName: this.normalizeOriginalFilename(document.originalName),
       status: document.status.toLowerCase() as Lowercase<DocumentStatus>
     };
   }

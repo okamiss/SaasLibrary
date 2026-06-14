@@ -119,6 +119,33 @@ describe('DocumentService', () => {
     });
   });
 
+  it('stores UTF-8 filenames decoded from multipart latin1 mojibake', async () => {
+    const originalName = '员工手册.pdf';
+    const mojibakeName = Buffer.from(originalName, 'utf8').toString('latin1');
+    const uploadedChineseDocument = {
+      ...uploadedDocument,
+      originalName
+    };
+    documentRepository.create.mockResolvedValueOnce(uploadedChineseDocument);
+
+    await service.upload(currentUser, {
+      ...file,
+      originalname: mojibakeName
+    });
+
+    expect(ossService.generateObjectKey).toHaveBeenCalledWith({
+      companyId: currentUser.companyId,
+      documentId: expect.any(String),
+      filename: originalName,
+      date: now
+    });
+    expect(documentRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        originalName
+      })
+    );
+  });
+
   it('cleans up metadata and OSS file when queue creation fails after metadata is created', async () => {
     parseQueue.add.mockRejectedValue(new Error('Redis unavailable'));
 
@@ -168,6 +195,19 @@ describe('DocumentService', () => {
     );
     expect(result.documents).toHaveLength(1);
     expect(result.documents[0].status).toBe('uploaded');
+  });
+
+  it('decodes legacy mojibake names when listing documents', async () => {
+    const originalName = '工资明细表.xlsx';
+    const legacyDocument = {
+      ...uploadedDocument,
+      originalName: Buffer.from(originalName, 'utf8').toString('latin1')
+    };
+    documentRepository.findManyByCompany.mockResolvedValue([legacyDocument]);
+
+    const result = await service.findMany(currentUser.companyId);
+
+    expect(result.documents[0].originalName).toBe(originalName);
   });
 
   it('returns one document only inside the current company', async () => {
