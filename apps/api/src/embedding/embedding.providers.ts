@@ -1,12 +1,16 @@
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EMBEDDING_PROVIDER_NAMES } from './embedding.constants';
 import { EmbeddingProvider } from './embedding.types';
+
+const ALIYUN_MAX_EMBEDDING_BATCH_SIZE = 10;
 
 interface OpenAICompatibleEmbeddingProviderOptions {
   label: string;
   apiKey?: string;
   baseUrl: string;
   model: string;
+  maxBatchSize?: number;
 }
 
 interface EmbeddingApiResponse {
@@ -17,15 +21,54 @@ interface EmbeddingApiResponse {
 }
 
 abstract class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
-  constructor(private readonly options: OpenAICompatibleEmbeddingProviderOptions) {}
+  private readonly logger: Logger;
+
+  constructor(private readonly options: OpenAICompatibleEmbeddingProviderOptions) {
+    this.logger = new Logger(`${this.options.label}EmbeddingProvider`);
+  }
 
   embedDocuments(texts: string[]) {
-    return this.requestEmbeddings(texts);
+    return this.requestEmbeddingBatches(texts);
   }
 
   async embedQuery(text: string) {
-    const [embedding] = await this.requestEmbeddings([text]);
+    const [embedding] = await this.embedDocuments([text]);
     return embedding;
+  }
+
+  private async requestEmbeddingBatches(input: string[]) {
+    if (input.length === 0) {
+      return [];
+    }
+
+    const maxBatchSize = Math.max(
+      1,
+      this.options.maxBatchSize ?? input.length
+    );
+    const embeddings: number[][] = [];
+
+    for (let offset = 0; offset < input.length; offset += maxBatchSize) {
+      const batch = input.slice(offset, offset + maxBatchSize);
+      const batchIndex = Math.floor(offset / maxBatchSize);
+
+      try {
+        embeddings.push(...(await this.requestEmbeddings(batch)));
+      } catch (error) {
+        this.logger.error(
+          [
+            'Embedding batch request failed.',
+            `provider=${this.options.label}`,
+            `batchIndex=${batchIndex}`,
+            `batchSize=${batch.length}`,
+            `model=${this.options.model}`,
+            `error=${this.toErrorMessage(error)}`
+          ].join(' ')
+        );
+        throw error;
+      }
+    }
+
+    return embeddings;
   }
 
   private async requestEmbeddings(input: string[]) {
@@ -70,6 +113,14 @@ abstract class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
   private trimBaseUrl() {
     return this.options.baseUrl.replace(/\/+$/, '');
   }
+
+  private toErrorMessage(error: unknown) {
+    if (error instanceof Error && error.message) {
+      return error.message.slice(0, 1000);
+    }
+
+    return String(error).slice(0, 1000);
+  }
 }
 
 export class AliyunEmbeddingProvider extends OpenAICompatibleEmbeddingProvider {
@@ -84,7 +135,8 @@ export class AliyunEmbeddingProvider extends OpenAICompatibleEmbeddingProvider {
       model: configService.get<string>(
         'ALI_EMBEDDING_MODEL',
         'text-embedding-v4'
-      )
+      ),
+      maxBatchSize: ALIYUN_MAX_EMBEDDING_BATCH_SIZE
     });
   }
 }
